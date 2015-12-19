@@ -1,3 +1,5 @@
+Depends on https://github.com/schamp/PersistentMPDClient
+
 An application meant to sit somewhere running, 
 and connect to a running MPD instance, to manage
 listening to audiobooks and keeping track of your position
