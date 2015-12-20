@@ -3,7 +3,7 @@ import re
 import sys
 
 # git clone git@github.com:schamp/PersistentMPDClient
-from PersistentMPDClient import PersistentMPDClient
+from PersistentMPDClient.PersistentMPDClient import PersistentMPDClient
 
 class AudiobookManager(object):
     """See README.md"""
@@ -134,7 +134,7 @@ if __name__ == "__main__":
     if len(sys.argv[1:]) == 1:
         socket = sys.argv[1]
         a = AudiobookManager(socket = socket)
-    elif (len(sys.argv[1:]) == 2:
+    elif len(sys.argv[1:]) == 2:
         host, port = sys.argv[1:]
         a = AudiobookManager(host = host, port = port)
     a.exec()
