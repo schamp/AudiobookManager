@@ -17,20 +17,20 @@ class AudiobookManager(object):
             raise Exception("You must specify either socket or host and port.")
 
         # turn this on to see what's happening
-        self.print_debug = False
+        self.print_debug = True
 
         # get current playlist
         self.current_playlist = self.client.playlist()
+        self.playlist_name = None
 
         # see if we're currently playing an audiobook...
-        a = self.is_audiobook(self.current_playlist[0])
-        if a:
-            self.debug("already playing an audiobook.")
-            self.playlist_name = self.get_playlist_name(a)
-            self.debug("Saving playlist: {}".format(self.playlist_name))
-            self.update_playlist(self.playlist_name)
-        else:
-            self.playlist_name = None
+        if len(self.current_playlist) > 0:
+            a = self.is_audiobook(self.current_playlist[0])
+            if a:
+                self.debug("already playing an audiobook.")
+                self.playlist_name = self.get_playlist_name(a)
+                self.debug("Saving playlist: {}".format(self.playlist_name))
+                self.update_playlist(self.playlist_name)
 
     def update_playlist(self, playlist_name):
         self.debug("saving playlist: {}".format(playlist_name))
@@ -93,45 +93,55 @@ class AudiobookManager(object):
                 # get the new playlist
                 new_playlist = self.client.playlist()
 
-                # see if it's an audiobook
-                a = self.is_audiobook(new_playlist[0])
-                if a:
-                    # it is an audiobook, see if we've just finsihed
-                    # the audiobook, or merely consumed 
-                    # the first item of the playlist, or replaced 
-                    # the playlist with a different one
+                # if we were just (prior to this playlist change)
+                # in an audiobook:
+                if self.playlist_name:
+                    # see if we've just finished the last item and 
+                    # emptied the playlist:
                     if len(new_playlist) == 0:
                         self.debug("It looks like this audiobook is finished, removing the playlist.")
-                        self.rm(self.playlist_name)
-                    elif new_playlist == self.current_playlist[1:]:
-                        self.debug("It looks like we're part of the same audiobook.")
-                        # save the playlist for the current audiobook
-                        self.update_playlist(self.playlist_name)
-                    else:
-                        self.debug("Not part of the same audiobook: {}".format(self.playlist_name))
-                        # its a new audiobook (or some other weird combination) 
-                        # that's been loaded
-                        # if all the playlist items are for the same audiobook
-                        same = True
-                        for i in new_playlist:
-                            if self.is_audiobook(i) != a:
-                                same = False
-                                break
-
-                        if same:
-                            self.debug("The new playlist is all the same audiobook.")
-                            self.playlist_name = self.get_playlist_name(a)
-                            self.debug("new playlist: {}".format(self.playlist_name))
-                            # save new playlist, for the new audiobook
+                        self.client.rm(self.playlist_name)
+                        self.playlist_name = None
+               
+                # now we see if there's any new processing based on
+                # the new playlist
+                if len(new_playlist) > 0:
+                    # see if it's an audiobook
+                    a = self.is_audiobook(new_playlist[0])
+                    if a:
+                        # it is an audiobook, see if we've just finsihed
+                        # the audiobook, or merely consumed 
+                        # the first item of the playlist, or replaced 
+                        # the playlist with a different one
+                        if new_playlist == self.current_playlist[1:]:
+                            self.debug("It looks like we're part of the same audiobook.")
+                            # save the playlist for the current audiobook
                             self.update_playlist(self.playlist_name)
-
                         else:
-                            self.debug("The new playlist is not the same audiobook.")
-                            self.playlist_name = None
-
-                    self.current_playlist = new_playlist
-                else:
-                    self.debug('Not an audiobook, continuing...')
+                            self.debug("Not part of the same audiobook: {}".format(self.playlist_name))
+                            # its a new audiobook (or some other weird combination) 
+                            # that's been loaded
+                            # if all the playlist items are for the same audiobook
+                            same = True
+                            for i in new_playlist:
+                                if self.is_audiobook(i) != a:
+                                    same = False
+                                    break
+    
+                            if same:
+                                self.debug("The new playlist is all the same audiobook.")
+                                self.playlist_name = self.get_playlist_name(a)
+                                self.debug("new playlist: {}".format(self.playlist_name))
+                                # save new playlist, for the new audiobook
+                                self.update_playlist(self.playlist_name)
+    
+                            else:
+                                self.debug("The new playlist is not the same audiobook.")
+                                self.playlist_name = None
+    
+                        self.current_playlist = new_playlist
+                    else:
+                        self.debug('Not an audiobook, continuing...')
 
 if __name__ == "__main__":
     if len(sys.argv[1:]) == 1:
