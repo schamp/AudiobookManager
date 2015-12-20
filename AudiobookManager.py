@@ -82,7 +82,6 @@ class AudiobookManager(object):
 
     def exec(self):
         # look for playlist changes forever
-        # TODO: detect when a playlist is empty and delete it
         while True:
             result = self.client.idle('playlist')
             self.debug("Idle done, result: {}".format(result))
@@ -97,10 +96,14 @@ class AudiobookManager(object):
                 # see if it's an audiobook
                 a = self.is_audiobook(new_playlist[0])
                 if a:
-                    # it is an audiobook, see if we've just consumed 
+                    # it is an audiobook, see if we've just finsihed
+                    # the audiobook, or merely consumed 
                     # the first item of the playlist, or replaced 
                     # the playlist with a different one
-                    if new_playlist == self.current_playlist[1:]:
+                    if len(new_playlist) == 0:
+                        self.debug("It looks like this audiobook is finished, removing the playlist.")
+                        self.rm(self.playlist_name)
+                    elif new_playlist == self.current_playlist[1:]:
                         self.debug("It looks like we're part of the same audiobook.")
                         # save the playlist for the current audiobook
                         self.update_playlist(self.playlist_name)
